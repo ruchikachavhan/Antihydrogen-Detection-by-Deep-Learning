@@ -6,8 +6,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 def return_tensor(X, i):
-	X_= np.expand_dims([X], axis=0)
-	z=np.array([X_[0][i:100+i]])
+	z=np.array([X[i:100+i]])
 	z= torch.from_numpy(z)
 	z = z.float()
 	z = z.to(device)
@@ -38,7 +37,6 @@ class ConvNet(nn.Module):
 		x = F.relu(self.conv3(x))
 		x = F.max_pool1d(x, 2)
 		x = F.relu(self.conv4(x))
-		x = F.max_pool1d(x, 2)
 		x = F.relu(self.conv5(x))
 		x = x.view(1,-1)
 		return x
@@ -46,7 +44,7 @@ class ConvNet(nn.Module):
 class Net(nn.Module):
 	def __init__(self):
 		super(Net, self).__init__()
-		self.fc1 = nn.Linear(256, 64)
+		self.fc1 = nn.Linear(384, 64)
 		self.fc2 = nn.Linear(64, 32)
 		self.fc3 = nn.Linear(32, 100)
 
@@ -66,31 +64,39 @@ params_total= np.append(params1, params2)
 optimizer = optim.Adam(params_total, lr=0.0001)
 
 def train(Z, Phi, target):
-	for iterations in range(0, 10000):
+	for iterations in range(0, 20000):
 		avg_loss=0
-		for i in range(0, Z_.shape[1], 100):
+		for i in range(0, Z.shape[0], 100):
 			z= return_tensor(Z, i)
 			phi= return_tensor(Phi, i)
-			Conv_Net_output_Z= ConvNet.forward(z)
-			Conv_Net_output_Phi= ConvNet.forward(phi)
-			FirstLayer= np.append(Conv_Net_output_Z, Conv_Net_output_Phi, axis =1)
+			Conv_Net_output_Z= conv_net.forward(z)
+			Conv_Net_output_Phi= conv_net.forward(phi)
+			FirstLayer= torch.cat((Conv_Net_output_Z, Conv_Net_output_Phi), 1)
 			output= forward_net.forward(FirstLayer)
 			criteria= nn.MSELoss()
-			label= return_tensor(target, i)
-			loss= criteria(output, label)
+			l=np.array([target[i:100+i]])
+			l= torch.from_numpy(l[0])
+			l = l.float()
+			l= l.t()
+			l= l.to(device)
+			loss= criteria(output, l)
 			avg_loss= avg_loss+loss
 			optimizer.zero_grad() 
 			loss.backward()
 			optimizer.step() 
 		print(iterations+1, avg_loss.item())
 		if(iterations%10 ==0):
-			name= "model_"+ str(iterations)+ ".pt"
-			torch.save(net, "/home/sine/ruchika/"+ name)
+			name_conv= "model_conv_"+ str(iterations)+ ".pt"
+			name_forward = "model_forward_"+ str(iterations)+ ".pt"
+			torch.save(conv_net, "/home/sine/ruchika/"+ name_conv )
+			torch.save(forward_net, "/home/sine/ruchika/"+ name_forward )
 
 #Reading data from csv file and dividing into inner and outer channels 
 data = np.genfromtxt("antihydrogen_1-10000.csv")
 #Ground truth 
 target= data[:,:1]
+# target= np.transpose(target)
+print("target", target.shape)
 InnerZ= data[:,1:448]
 OuterZ= data[:,694:1141]
 InnerPhi= data[:,448:694]
