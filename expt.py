@@ -55,7 +55,30 @@ class Net(nn.Module):
 		x = F.relu(self.fc2(x))
 		x = self.fc3(x)
 		return x
-		
+
+optimizer = optim.Adam(params_total, lr=0.0001)
+	def train(Z, Phi, target):
+	for iterations in range(0, 10000):
+	avg_loss=0
+	for i in range(0, Z_.shape[1], 100):
+		z= return_tensor(Z, i)
+		phi= return_tensor(Phi, i)
+		Conv_Net_output_Z= ConvNet.forward(z)
+		Conv_Net_output_Phi= ConvNet.forward(phi)
+		FirstLayer= np.append(Conv_Net_output_Z, Conv_Net_output_Phi, axis =1)
+		output= forward_net.forward(FirstLayer)
+		criteria= nn.MSELoss()
+		label= return_tensor(target, i)
+		loss= criteria(output, label)
+		avg_loss= avg_loss+loss
+		optimizer.zero_grad() 
+		loss.backward()
+		optimizer.step() 
+	print(iterations+1, avg_loss.item())
+	if(iterations%10 ==0):
+		name= "model_"+ str(iterations)+ ".pt"
+		torch.save(net, "/home/sine/ruchika/"+ name)
+
 conv_net=ConvNet().to(device)
 forward_net= Net().to(device)
 params1 = list(conv_net.parameters())
@@ -77,26 +100,4 @@ OuterPhi= data[:,1141:1431]
 Z= np.append(InnerZ, OuterZ, axis=1)
 Phi= np.append(InnerPhi, OuterPhi, axis=1)
 
-
-optimizer = optim.Adam(params_total, lr=0.0001)
-def train(Z, Phi, target):
-	for iterations in range(0, 10000):
-	avg_loss=0
-	for i in range(0, Z_.shape[1], 100):
-		z= return_tensor(Z, i)
-		phi= return_tensor(Phi, i)
-		Conv_Net_output_Z= ConvNet.forward(z)
-		Conv_Net_output_Phi= ConvNet.forward(phi)
-		FirstLayer= np.append(Conv_Net_output_Z, Conv_Net_output_Phi, axis =1)
-		output= forward_net.forward(FirstLayer)
-		criteria= nn.MSELoss()
-		label= return_tensor(target, i)
-		loss= criteria(output, label)
-		avg_loss= avg_loss+loss
-		optimizer.zero_grad() 
-		loss.backward()
-		optimizer.step() 
-	print(iterations+1, avg_loss.item())
-	if(iterations%10 ==0):
-		name= "model_"+ str(iterations)+ ".pt"
-		torch.save(net, "/home/sine/ruchika/"+ name)
+train(Z, Phi, target)
