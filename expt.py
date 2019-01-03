@@ -88,7 +88,7 @@ def train(Z, Phi, target):
 			torch.save(net, "/home/sine/ruchika/"+ name)
 
 #Reading data from csv file and dividing into inner and outer channels 
-data = np.genfromtxt("antihydrogen_test.csv")
+data = np.genfromtxt("antihydrogen_1-10000.csv")
 #Ground truth 
 target= data[:,:1]
 InnerZ= data[:,1:448]
